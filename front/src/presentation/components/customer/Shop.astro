@@ -3,7 +3,7 @@ import type { Category } from '@/domain/catalog/Category'
 import type { Product } from '@/domain/catalog/Product'
 import Hero from '@/presentation/components/layout/Hero.astro'
 import CategorySidebar from '../shared/CategorySidebar.astro'
-import MiniCart from '@/presentation/components/customer/MiniCart'
+import MiniCart from '@/presentation/components/customer/MiniCart.astro'
 import ProductCard from '../shared/ProductCard.astro'
 
 interface Props {
@@ -53,7 +53,7 @@ const title = search
       </section>
 
       <div class="hidden self-stretch xl:block">
-        <MiniCart client:only="react" />
+        <MiniCart />
       </div>
     </div>
   </>

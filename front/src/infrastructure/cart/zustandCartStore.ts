@@ -44,6 +44,12 @@ export const useCartStore = create<CartState>()(
   )
 )
 
+if (typeof window !== 'undefined') {
+  useCartStore.subscribe(() => {
+    window.dispatchEvent(new Event('checobarber:cart-change'))
+  })
+}
+
 // El store cumple el puerto CartStorage
 export const zustandCartStorage: CartStorage = {
   load: () => useCartStore.getState().items,

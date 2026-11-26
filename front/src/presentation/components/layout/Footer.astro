@@ -1,6 +1,7 @@
 ---
 import { FacebookLogoIcon, GithubLogoIcon, InstagramLogoIcon, LinkedinLogoIcon } from '@phosphor-icons/react/dist/ssr'
 import { Separator } from '@/presentation/components/ui/separator'
+import ProductImage from '@/presentation/components/shared/ProductImage.astro'
 
 const user = Astro.locals.user
 
@@ -27,7 +28,7 @@ const sitemap = [
 <footer id="contacto" class="w-full bg-footer px-6 py-12 text-footer-foreground md:px-12">
   <div class="mx-auto grid max-w-[1600px] gap-10 md:grid-cols-[2fr_3fr] md:items-start">
     <section class="flex flex-col items-start justify-center gap-2">
-      <img src="/logo.png" alt="ChecoBarber" class="mb-2 w-18 object-contain" />
+      <ProductImage src="/logo.jpg" alt="ChecoBarber" width="708" height="733" loading="lazy" pictureClass="mb-2 block w-18" imageClass="w-full object-contain" />
       <div class="flex items-center gap-2">
         {socials.map(({ label, href, Icon }) => (
           <a

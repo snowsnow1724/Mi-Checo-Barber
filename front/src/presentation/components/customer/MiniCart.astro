@@ -1,0 +1,117 @@
+---
+---
+
+<aside
+  data-mini-cart
+  class="group/card sticky top-28 my-7.5 mr-7.5 flex w-70 min-w-70 flex-col gap-0 overflow-hidden rounded-none bg-muted/40 p-5 text-xs/relaxed text-card-foreground ring-1 ring-foreground/10 shadow-[0_0_20px_#2222]"
+>
+  <div class="flex items-center justify-between pb-4">
+    <h2 class="text-xl font-bold tracking-wide">Tu carrito</h2>
+    <span
+      data-mini-cart-count
+      aria-label="Productos en el carrito"
+      class="flex size-7 items-center justify-center rounded-full border px-1.5"
+    >0</span>
+  </div>
+  <div class="h-px bg-border"></div>
+
+  <p data-mini-cart-empty class="px-1 py-8 text-center text-sm text-muted-foreground">
+    Aún no has agregado productos.
+  </p>
+  <ul data-mini-cart-items class="hidden max-h-87.5 flex-col gap-3 overflow-y-auto py-4"></ul>
+
+  <div class="h-px bg-border"></div>
+  <div class="flex items-center justify-between py-4">
+    <span>Total</span>
+    <strong data-mini-cart-total class="text-lg">$0.00</strong>
+  </div>
+  <a
+    href="/carrito"
+    class="inline-flex h-9 items-center justify-center gap-1.5 border border-border bg-background px-2.5 text-xs font-medium hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+  >
+    Ver carrito
+  </a>
+</aside>
+
+<script>
+  interface CartItem {
+    id: string
+    name: string
+    price: number
+    quantity: number
+  }
+
+  const CART_KEY = 'checobarber-cart'
+
+  function readCart(): CartItem[] {
+    try {
+      const saved = localStorage.getItem(CART_KEY)
+      const items: unknown = saved ? JSON.parse(saved)?.state?.items : []
+      if (!Array.isArray(items)) throw new Error('El carrito guardado no contiene una lista de productos.')
+
+      return items.filter((item): item is CartItem =>
+        item !== null
+        && typeof item === 'object'
+        && typeof item.id === 'string'
+        && typeof item.name === 'string'
+        && typeof item.price === 'number'
+        && Number.isFinite(item.price)
+        && typeof item.quantity === 'number'
+        && Number.isFinite(item.quantity)
+        && item.quantity > 0
+      )
+    } catch (error) {
+      console.warn('[carrito] No se pudo leer el resumen guardado.', error)
+      return []
+    }
+  }
+
+  function renderMiniCart(): void {
+    const root = document.querySelector<HTMLElement>('[data-mini-cart]')
+    if (!root) return
+
+    const items = readCart()
+    const count = items.reduce((total, item) => total + item.quantity, 0)
+    const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
+    const countElement = root.querySelector<HTMLElement>('[data-mini-cart-count]')
+    const totalElement = root.querySelector<HTMLElement>('[data-mini-cart-total]')
+    const emptyElement = root.querySelector<HTMLElement>('[data-mini-cart-empty]')
+    const list = root.querySelector<HTMLUListElement>('[data-mini-cart-items]')
+
+    if (!countElement || !totalElement || !emptyElement || !list) return
+
+    countElement.textContent = String(count)
+    totalElement.textContent = `$${total.toFixed(2)}`
+    emptyElement.hidden = items.length > 0
+    list.hidden = items.length === 0
+    list.classList.toggle('hidden', items.length === 0)
+    list.replaceChildren(...items.map((item) => {
+      const row = document.createElement('li')
+      row.className = 'flex items-start justify-between gap-2.5 border-b pb-2.5 last:border-b-0'
+
+      const details = document.createElement('div')
+      details.className = 'flex min-w-0 flex-col gap-1'
+
+      const name = document.createElement('h3')
+      name.className = 'truncate text-sm font-medium'
+      name.textContent = item.name
+
+      const quantity = document.createElement('span')
+      quantity.className = 'text-xs text-muted-foreground'
+      quantity.textContent = `${item.quantity} × $${item.price.toFixed(2)}`
+
+      const lineTotal = document.createElement('strong')
+      lineTotal.className = 'whitespace-nowrap text-[13px]'
+      lineTotal.textContent = `$${(item.price * item.quantity).toFixed(2)}`
+
+      details.append(name, quantity)
+      row.append(details, lineTotal)
+      return row
+    }))
+  }
+
+  renderMiniCart()
+  window.addEventListener('storage', renderMiniCart)
+  window.addEventListener('checobarber:cart-change', renderMiniCart)
+  document.addEventListener('astro:page-load', renderMiniCart)
+</script>

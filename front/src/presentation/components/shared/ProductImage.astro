@@ -1,0 +1,45 @@
+---
+import { productImageUrl } from '@/domain/catalog/productImageUrl'
+import { optimizedImageUrl } from '@/infrastructure/images/optimizedImageUrl'
+
+interface Props {
+  src: string
+  alt: string
+  width: number
+  height: number
+  imageClass?: string
+  pictureClass?: string
+  loading?: 'eager' | 'lazy'
+  decoding?: 'async' | 'sync' | 'auto'
+  fetchpriority?: 'high' | 'low' | 'auto'
+}
+
+const {
+  src,
+  alt,
+  width,
+  height,
+  imageClass = '',
+  pictureClass = '',
+  loading = 'lazy',
+  decoding = 'async',
+  fetchpriority,
+} = Astro.props
+const fallbackSrc = productImageUrl(src)
+const webpSrc = optimizedImageUrl(src)
+---
+
+<picture class={pictureClass}>
+  {webpSrc !== fallbackSrc && <source srcset={webpSrc} type="image/webp" />}
+  <img
+    src={fallbackSrc}
+    alt={alt}
+    width={width}
+    height={height}
+    loading={loading}
+    decoding={decoding}
+    fetchpriority={fetchpriority}
+    class={imageClass}
+    onerror="this.remove()"
+  />
+</picture>

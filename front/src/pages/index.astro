@@ -31,9 +31,21 @@ try {
 } catch (err) {
   error = err instanceof Error ? err.message : 'Error de conexión.'
 }
+
+if (!term && !error && !Astro.locals.user) {
+  Astro.response.headers.set(
+    'Cache-Control',
+    'public, s-maxage=30, stale-while-revalidate=300'
+  )
+} else {
+  Astro.response.headers.set('Cache-Control', 'private, no-store')
+}
 ---
 
-<BaseLayout title="ChecoBarber | Tienda">
+<BaseLayout
+  title="Productos para cabello y barba | ChecoBarber"
+  description="Compra productos para el cuidado de cabello y barba en ChecoBarber. Explora aceites, ceras, shampoos y accesorios."
+>
   <div id="products">
     <Shop categories={categories} products={products} search={search} error={error} />
   </div>

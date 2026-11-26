@@ -10,13 +10,9 @@ const { admin = false } = Astro.props
 ---
 
 <div id="toast-root" data-ws={PUBLIC_GRAPHQL_WS_URL} data-admin={admin ? '1' : ''} hidden></div>
-<!-- transition:persist: los avisos sobreviven al reemplazo de página que hace el catálogo en vivo -->
-<div id="toast-list" transition:persist aria-live="polite" class="fixed right-4 bottom-4 z-50 flex w-72 flex-col gap-2"></div>
+<div id="toast-list" aria-live="polite" class="fixed right-4 bottom-4 z-50 flex w-72 flex-col gap-2"></div>
 
 <script>
-  import { createClient } from 'graphql-ws'
-  import { navigate } from 'astro:transitions/client'
-
   interface NewProduct {
     id: string
     name: string
@@ -31,17 +27,13 @@ const { admin = false } = Astro.props
   // para tener una sola conexión por pestaña (si no, se duplican avisos y recargas).
   const flags = window as unknown as { __newProductSubscribed?: boolean }
   let queue: Promise<void> = Promise.resolve()
+  let initializing = false
 
-  // Si el cliente está viendo el catálogo, se vuelve a pedir la página y se reemplaza sin recargar
-  // (conserva el scroll y el carrito). Se encadenan para que productos seguidos no se pisen.
-  function refreshCatalog(): Promise<void> {
-    queue = queue.then(async () => {
+  function refreshCatalog(): void {
+    queue = queue.then(() => {
       if (!document.getElementById('product-grid')) return
-      const y = window.scrollY
-      await navigate(location.pathname + location.search, { history: 'replace' })
-      window.scrollTo(0, y)
+      location.reload()
     }).catch((err) => console.error('[catálogo en vivo]', err))
-    return queue
   }
 
   function toastList() {
@@ -97,29 +89,41 @@ const { admin = false } = Astro.props
     setTimeout(() => card.remove(), VISIBLE_MS)
   }
 
-  function init() {
-    if (flags.__newProductSubscribed) return
+  async function init() {
+    if (flags.__newProductSubscribed || initializing) return
     const url = document.getElementById('toast-root')?.dataset.ws
     if (!url) return
-    flags.__newProductSubscribed = true
+    initializing = true
 
-    // graphql-ws solo reintenta por defecto cuando el servidor cierra una conexión ya abierta.
-    // Si el backend aún no estaba arriba (ERR_CONNECTION_REFUSED), daba por perdida la suscripción
-    // para siempre. Con shouldRetry reintenta con espera creciente hasta que el servidor responda.
-    createClient({ url, retryAttempts: Infinity, shouldRetry: () => true }).subscribe<{ productCreated: NewProduct }>(
-      { query: QUERY },
-      {
-        next: ({ data }) => {
-          if (!data?.productCreated) return
-          show(data.productCreated)
-          void refreshCatalog()
-        },
-        error: (err: unknown) => console.warn('[suscripción productCreated] se detuvo:', err),
-        complete: () => {},
-      }
-    )
+    try {
+      const { createClient } = await import('graphql-ws')
+      if (flags.__newProductSubscribed) return
+
+      // Reintenta con espera creciente si el backend aún no está disponible.
+      createClient({ url, retryAttempts: Infinity, shouldRetry: () => true }).subscribe<{ productCreated: NewProduct }>(
+        { query: QUERY },
+        {
+          next: ({ data }) => {
+            if (!data?.productCreated) return
+            show(data.productCreated)
+            void refreshCatalog()
+          },
+          error: (err: unknown) => console.warn('[suscripción productCreated] se detuvo:', err),
+          complete: () => {},
+        }
+      )
+      flags.__newProductSubscribed = true
+    } catch (err) {
+      console.error('[suscripción productCreated]', err)
+    } finally {
+      initializing = false
+    }
   }
 
-  init()
-  document.addEventListener('astro:page-load', init)
+  function scheduleInit() {
+    window.setTimeout(() => void init(), 10_000)
+  }
+
+  scheduleInit()
+  document.addEventListener('astro:page-load', scheduleInit)
 </script>
