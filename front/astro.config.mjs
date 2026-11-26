@@ -9,6 +9,9 @@ export default defineConfig({
   output: 'server',
   adapter: vercel(),
   integrations: [react()],
+  devToolbar: {
+    enabled: false,
+  },
 
   env: {
     schema: {
@@ -20,7 +23,7 @@ export default defineConfig({
       GRAPHQL_URL: envField.string({
         context: 'server',
         access: 'secret',
-        default: 'http://localhost:4000/',
+        default: 'http://127.0.0.1:4000/',
       }),
 
       PUBLIC_GRAPHQL_WS_URL: envField.string({

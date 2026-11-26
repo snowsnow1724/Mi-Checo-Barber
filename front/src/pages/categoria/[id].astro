@@ -11,16 +11,30 @@ let category: Category | null = null
 let error = ''
 
 try {
-  categories = await getCategories.execute()
-  category = await getCategoryById.execute(id ?? '')
+  ;[categories, category] = await Promise.all([
+    getCategories.execute(),
+    getCategoryById.execute(id ?? ''),
+  ])
 } catch (err) {
   error = err instanceof Error ? err.message : 'Error de conexión.'
 }
 
 if (!error && !category) Astro.response.status = 404
+
+if (!error && category && !Astro.locals.user) {
+  Astro.response.headers.set(
+    'Cache-Control',
+    'public, s-maxage=30, stale-while-revalidate=300'
+  )
+} else {
+  Astro.response.headers.set('Cache-Control', 'private, no-store')
+}
 ---
 
-<BaseLayout title={`${category?.name ?? 'Categoría'} | ChecoBarber`}>
+<BaseLayout
+  title={`${category?.name ?? 'Categoría'} | ChecoBarber`}
+  description={category?.description || `Explora productos de ${category?.name ?? 'esta categoría'} en ChecoBarber.`}
+>
   <Shop
     categories={categories}
     products={category?.products ?? []}

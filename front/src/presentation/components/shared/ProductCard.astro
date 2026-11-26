@@ -1,7 +1,8 @@
 ---
 import type { Product } from '@/domain/catalog/Product'
+import AddToCartButton from '@/presentation/components/customer/AddToCartButton.astro'
+import ProductImage from '@/presentation/components/shared/ProductImage.astro'
 import { buttonVariants } from '@/presentation/components/ui/button'
-import AddToCartButton from '@/presentation/components/customer/AddToCartButton'
 
 interface Props {
     product: Product
@@ -26,9 +27,13 @@ const {
             <span class="text-xs text-muted-foreground">🖼️ Sin Imagen</span>
 
             {product.img && (
-                <img
-                    src={product.img} alt={product.name}
-                    class="absolute inset-0 size-full bg-muted object-contain" onerror="this.remove()"
+                <ProductImage
+                    src={product.img}
+                    alt={product.name}
+                    width={640}
+                    height={640}
+                    pictureClass="absolute inset-0 size-full"
+                    imageClass="size-full bg-muted object-contain"
                 />
             )}
         </div>
@@ -42,15 +47,7 @@ const {
         <a href={detailHref} class={buttonVariants({ variant: 'outline', size: 'lg' })}>{detailLabel}</a>
 
         {showAddToCart && (
-            <AddToCartButton
-                client:load
-                product={{
-                    id: product.id,
-                    name: product.name,
-                    price: product.price,
-                    img: product.img
-                }}
-            />
+            <AddToCartButton product={{ id: product.id, name: product.name, price: product.price, img: product.img }} />
         )}
     </div>
 </div>
@@ -77,6 +74,10 @@ const { product } = Astro.props
       <img
         src={product.img}
         alt={product.name}
+        width="640"
+        height="640"
+        loading="lazy"
+        decoding="async"
         class="absolute inset-0 size-full bg-[#f8f8f8] object-contain"
         onerror="this.remove()"
       />
@@ -95,10 +96,7 @@ const { product } = Astro.props
 
   <div class="flex flex-wrap items-center gap-2 p-3.75 pt-0">
     <span class="mr-auto text-base font-bold">${product.price.toFixed(2)}</span>
-    <AddToCartButton
-      client:load
-      product={{ id: product.id, name: product.name, price: product.price, img: product.img }}
-    />
+    <AddToCartButton product={{ id: product.id, name: product.name, price: product.price, img: product.img }} />
     <a href={`/producto/${product.id}`} class={buttonVariants({ variant: 'outline' })}>Ver detalle</a>
   </div>
 </Card> -->

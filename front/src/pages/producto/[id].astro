@@ -16,10 +16,50 @@ try {
 }
 
 if (!error && !product) Astro.response.status = 404
+
+if (!error && product && !Astro.locals.user) {
+  Astro.response.headers.set(
+    'Cache-Control',
+    'public, s-maxage=30, stale-while-revalidate=300'
+  )
+} else {
+  Astro.response.headers.set('Cache-Control', 'private, no-store')
+}
 ---
 
-<BaseLayout title={`${product?.name ?? 'Producto'} | ChecoBarber`}>
+<BaseLayout
+  title={`${product?.name ?? 'Producto'} | ChecoBarber`}
+  description={product?.description || `Conoce ${product?.name ?? 'este producto'} en ChecoBarber.`}
+  image={product?.img || '/logo.jpg'}
+  preloadImage={product?.img || '/logo.jpg'}
+  type={product ? 'product' : 'website'}
+>
   {error && <div class="p-10 text-destructive">Error: {error}</div>}
   {!error && !product && <div class="p-10">No se encontró el producto.</div>}
-  {product && <ProductDetail product={product} />}
-</BaseLayout>ch
+  {product && (
+    <>
+      <script
+        type="application/ld+json"
+        set:html={JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'Product',
+          name: product.name,
+          description: product.description,
+          image: new URL(product.img, Astro.url.origin).href,
+          sku: product.id,
+          brand: { '@type': 'Brand', name: 'ChecoBarber' },
+          offers: {
+            '@type': 'Offer',
+            priceCurrency: 'MXN',
+            price: product.price.toFixed(2),
+            availability: product.stock > 0
+              ? 'https://schema.org/InStock'
+              : 'https://schema.org/OutOfStock',
+            url: new URL(Astro.url.pathname, Astro.url.origin).href,
+          },
+        }).replace(/</g, '\\u003c')}
+      />
+      <ProductDetail product={product} />
+    </>
+  )}
+</BaseLayout>

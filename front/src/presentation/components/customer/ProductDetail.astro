@@ -5,7 +5,8 @@ import type { Product } from '@/domain/catalog/Product'
 import { Badge } from '@/presentation/components/ui/badge'
 import { buttonVariants } from '@/presentation/components/ui/button'
 import { Card } from '@/presentation/components/ui/card'
-import ProductActions from '@/presentation/components/customer/ProductActions' // Importa el nuevo componente
+import ProductActions from '@/presentation/components/customer/ProductActions.astro'
+import ProductImage from '@/presentation/components/shared/ProductImage.astro'
 
 interface Props {
    product: Product
@@ -23,11 +24,15 @@ const { product } = Astro.props
       <div class="relative flex min-h-80 items-center justify-center overflow-hidden rounded-xl bg-[#f8f8f8] md:min-h-112.5">
          <span class="text-muted-foreground">🖼️ Sin imagen</span>
          {product.img && (
-         <img
+         <ProductImage
             src={product.img}
             alt={product.name}
-            class="absolute inset-0 size-full bg-[#f8f8f8] object-contain"
-            onerror="this.remove()"
+            width={800}
+            height={800}
+            fetchpriority="high"
+            loading="eager"
+            pictureClass="absolute inset-0 size-full"
+            imageClass="size-full bg-[#f8f8f8] object-contain"
          />
          )}
       </div>
@@ -41,7 +46,7 @@ const { product } = Astro.props
          <p class="mb-2.5 text-[28px] font-bold tracking-[2px]">${product.price.toFixed(2)}</p>
          
          {/* Reemplazamos todo el bloque antiguo por el componente reactivo */}
-         <ProductActions client:load product={product} />
+         <ProductActions product={product} />
 
       </div>
    </Card>
@@ -95,7 +100,7 @@ const inStock = product.stock > 0
 
          <div class="flex flex-wrap gap-2.5">
          <AddToCartButton
-            client:load
+            client:visible
             product={{ id: product.id, name: product.name, price: product.price, img: product.img }}
             disabled={!inStock}
             label="Añadir al carrito"

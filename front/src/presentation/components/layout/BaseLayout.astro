@@ -3,11 +3,25 @@ import '@/styles/global.css'
 import TopBar from '@/presentation/components/layout/TopBar.astro'
 import Footer from '@/presentation/components/layout/Footer.astro'
 import NewProductToast from '@/presentation/components/shared/NewProductToast.astro'
+import { optimizedImageUrl } from '@/infrastructure/images/optimizedImageUrl'
 interface Props {
   title?: string
+  description?: string
+  image?: string
+  preloadImage?: string
+  type?: 'website' | 'product'
 }
 
-const { title = 'ChecoBarber' } = Astro.props
+const {
+  title = 'ChecoBarber',
+  description = 'Descubre productos para cabello y barba y agenda tu cita en ChecoBarber.',
+  image = '/logo.jpg',
+  preloadImage = '/logo.jpg',
+  type = 'website',
+} = Astro.props
+const canonical = new URL(Astro.url.pathname, Astro.url.origin).href
+const socialImage = new URL(image, Astro.url.origin).href
+const optimizedPreloadImage = optimizedImageUrl(preloadImage)
 ---
 
 <!doctype html>
@@ -18,6 +32,19 @@ const { title = 'ChecoBarber' } = Astro.props
     <link rel="icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="generator" content={Astro.generator} />
+    <link rel="preload" as="image" href={optimizedPreloadImage} fetchpriority="high" />
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta property="og:type" content={type} />
+    <meta property="og:site_name" content="ChecoBarber" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={socialImage} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={socialImage} />
     <title>{title}</title>
   </head>
   <body class="flex min-h-screen flex-col">
